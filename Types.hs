@@ -5,6 +5,7 @@ module Types
         
         ThrowsError,
         throwError,
+        showVal,
         LispVal 
         (
           Atom,
@@ -15,7 +16,9 @@ module Types
           Character,
           List,
           DottedList,
-          Vector
+          Vector,
+          PrimitiveFunc,
+          Func
         ),
         LispError 
         (
@@ -26,12 +29,18 @@ module Types
           NotFunction,
           UnboundVar,
           Default
-        )
+        ),
+        Env,
     ) 
     where
+
 import Data.Array
 import Control.Monad.Error
 import Text.ParserCombinators.Parsec hiding (spaces)
+import Data.IORef
+
+
+type Env = IORef [(String, IORef LispVal)]
 
 data LispVal = Atom String
           | Number Integer
@@ -41,7 +50,10 @@ data LispVal = Atom String
           | Character Char
           | List [LispVal]
           | DottedList [LispVal] LispVal
-          | Vector (Array Int LispVal) deriving (Eq)
+          | Vector (Array Int LispVal)
+          | Func {params :: [String], vararg :: (Maybe String), body :: [LispVal], closure :: Env}
+          | PrimitiveFunc ([LispVal] -> ThrowsError LispVal) 
+          -- deriving (Eq)
 
 data LispError = NumArgs Integer [LispVal]
                | TypeMismatch String LispVal
@@ -67,6 +79,12 @@ showVal (Bool True) = "#t"
 showVal (Bool False) = "#f"
 showVal (List contents) = "(" ++ unwordsList contents ++ ")"
 showVal (DottedList head tail) = "(" ++ unwordsList head ++ " . " ++ showVal tail ++ ")"
+showVal (PrimitiveFunc _) = "<primitive>"
+showVal (Func {params = args, vararg = varargs, body = body, closure = env}) = 
+  "(lambda (" ++ unwords (map show args) ++ 
+     (case varargs of 
+        Nothing -> ""
+        Just arg -> " . " ++ arg) ++ ") ...)" 
 
 showError :: LispError -> String
 showError (UnboundVar message varname) = message ++ ": " ++ varname
@@ -87,5 +105,3 @@ instance Error LispError where
 
 type ThrowsError = Either LispError
 
---instance Eq LispVal where
---    LispVal a == LispVal b = a == b 
