@@ -7,8 +7,6 @@ import Control.Monad.Error
 -- IORef holding a list that maps Strings to mutable LispVals
 -- Variable name and its value
 
-type IOThrowsError = ErrorT LispError IO
-
 nullEnv :: IO Env
 nullEnv = newIORef []
 

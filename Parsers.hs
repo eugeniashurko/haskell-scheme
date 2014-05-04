@@ -1,26 +1,9 @@
 {- This module contains Scheme types definitions -}
 
-module Parsers 
-    (
-      symbol,
-      spaces,
-      parseChar,
-      parseString,
-      parseAtom,
-      parseNumber,
-      parseFloat,
-      parseList,
-      parseDottedList,
-      parseQuoted,
-      parseQuasiQuoted,
-      parseUnQuote,
-      parseVector,
-      parseExpr
-    ) 
-    where
+module Parsers where
 import Types
 import Text.ParserCombinators.Parsec hiding (spaces)
-import Control.Monad
+import Control.Monad.Error
 import Numeric
 import Data.Array
 
@@ -137,4 +120,11 @@ parseExpr = parseAtom
         char ')'
         return x)
 
+readOrThrow :: Parser a -> String -> ThrowsError a
+readOrThrow parser input = case parse parser "lisp" input of
+    Left err -> throwError $ Parser err
+    Right val -> return val
 
+
+readExpr = readOrThrow parseExpr
+readExprList = readOrThrow (endBy parseExpr spaces)

@@ -1,32 +1,18 @@
 {- This module contains definitions of Scheme pimitives -}
 -- Pragma for using  Existential Types in Haskell
 {-# LANGUAGE ExistentialQuantification #-}
-module Primitives 
-    (
-      primitives,
-      unpackNum,
-      unpackStr,
-      numericBinop,
-      unaryOp,
-      boolBinop,
-      numBoolBinop,
-      strBoolBinop,
-      boolBoolBinop,
-      symbolp, 
-      numberp, 
-      stringp, 
-      boolp, 
-      listp,
-      symbol2string, 
-      string2symbol,
-      car,
-      cdr,
-      cons,
-      eqv,
-      equal
-    ) where
+module Primitives where
 import Types
+import Variables
 import Control.Monad.Error
+import System.IO
+import Utils
+import IOPrimitives
+
+primitiveBindings :: IO Env
+primitiveBindings = nullEnv >>= (flip bindVars $ map (makeFunc IOFunc) ioPrimitives
+                                              ++ map (makeFunc PrimitiveFunc) primitives)
+    where makeFunc constructor (var, func) = (var, constructor func)
 
 primitives :: [(String, [LispVal] -> ThrowsError LispVal)]
 primitives = [("+" , numericBinop (+)) ,

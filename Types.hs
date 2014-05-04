@@ -1,46 +1,16 @@
 {- This module contains Scheme types definitions -}
 
-module Types 
-    (
-        
-        ThrowsError,
-        throwError,
-        showVal,
-        LispVal 
-        (
-          Atom,
-          Number,
-          Float,
-          String,
-          Bool,
-          Character,
-          List,
-          DottedList,
-          Vector,
-          PrimitiveFunc,
-          Func
-        ),
-        LispError 
-        (
-          NumArgs,
-          TypeMismatch,
-          Parser,
-          BadSpecialForm,
-          NotFunction,
-          UnboundVar,
-          Default
-        ),
-        Env,
-    ) 
-    where
+module Types where
 
 import Data.Array
 import Control.Monad.Error
 import Text.ParserCombinators.Parsec hiding (spaces)
 import Data.IORef
-
+import System.IO
 
 type Env = IORef [(String, IORef LispVal)]
+
+type IOThrowsError = ErrorT LispError IO
 
 data LispVal = Atom String
           | Number Integer
@@ -52,7 +22,9 @@ data LispVal = Atom String
           | DottedList [LispVal] LispVal
           | Vector (Array Int LispVal)
           | Func {params :: [String], vararg :: (Maybe String), body :: [LispVal], closure :: Env}
-          | PrimitiveFunc ([LispVal] -> ThrowsError LispVal) 
+          | PrimitiveFunc ([LispVal] -> ThrowsError LispVal)
+          | IOFunc ([LispVal] -> IOThrowsError LispVal)
+          | Port Handle 
           -- deriving (Eq)
 
 data LispError = NumArgs Integer [LispVal]
@@ -85,6 +57,8 @@ showVal (Func {params = args, vararg = varargs, body = body, closure = env}) =
      (case varargs of 
         Nothing -> ""
         Just arg -> " . " ++ arg) ++ ") ...)" 
+showVal (Port _) = "<IO port>"
+showVal (IOFunc _) = "<IO primitive>"
 
 showError :: LispError -> String
 showError (UnboundVar message varname) = message ++ ": " ++ varname
