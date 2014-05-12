@@ -44,11 +44,11 @@ parseAtom :: Parser LispVal
 parseAtom = do 
     first <- letter <|> symbol
     rest <- many (letter <|> digit <|> symbol)
-    let atom = first:rest
+    let atom = [first] ++ rest
     return $ case atom of 
                "#t" -> Bool True
                "#f" -> Bool False
-               _    -> Atom atom  
+               otherwise -> Atom atom  
 
 -- parse number
 parseNumber :: Parser LispVal
@@ -101,24 +101,24 @@ parseVector = do
     arrayValues <- sepBy parseExpr spaces
     return $ Vector (listArray (0, (length arrayValues - 1)) arrayValues)
 
--- parse either string or atom or number
+
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
     <|> parseString
     <|> parseNumber
-    <|> try parseFloat
+    <|> parseFloat
     <|> parseChar
     <|> parseQuoted
-    <|> try (do 
+    <|> do 
         char '('
-        x <- try parseList <|> parseDottedList
+        x <- (try parseList) <|> parseDottedList
         char ')'
-        return x)
-    <|> try (do 
+        return x
+    <|> do 
         string "#("
         x <- parseVector
         char ')'
-        return x)
+        return x
 
 readOrThrow :: Parser a -> String -> ThrowsError a
 readOrThrow parser input = case parse parser "lisp" input of

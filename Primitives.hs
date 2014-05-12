@@ -5,8 +5,6 @@ module Primitives where
 import Types
 import Variables
 import Control.Monad.Error
-import System.IO
-import Utils
 import IOPrimitives
 
 primitiveBindings :: IO Env

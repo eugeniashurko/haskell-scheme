@@ -12,6 +12,15 @@ type Env = IORef [(String, IORef LispVal)]
 
 type IOThrowsError = ErrorT LispError IO
 
+instance Show LispError where show = showError
+instance Show LispVal where show = showVal
+
+instance Error LispError where
+     noMsg = Default "An error has occurred"
+     strMsg = Default
+
+type ThrowsError = Either LispError
+
 data LispVal = Atom String
           | Number Integer
           | Float Double
@@ -69,13 +78,3 @@ showError (NumArgs expected found) = "Expected " ++ show expected
 showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected
                                        ++ ", found " ++ show found
 showError (Parser parseErr) = "Parse error at " ++ show parseErr
-
-instance Show LispError where show = showError
-instance Show LispVal where show = showVal
-
-instance Error LispError where
-     noMsg = Default "An error has occurred"
-     strMsg = Default
-
-type ThrowsError = Either LispError
-
